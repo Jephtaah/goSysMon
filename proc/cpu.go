@@ -2,6 +2,8 @@ package proc
 
 import (
 	"bufio"
+	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -27,36 +29,43 @@ func ReadCPUStats() (*CPUStats, error) {
 		return nil, err
 	}
 	defer f.Close()
+	return ParseCPUSats(f)
+}
 
-	scanner := bufio.NewScanner(f)
+func ParseCPUSats(r io.Reader) (*CPUStats, error) {
+	scanner := bufio.NewScanner(r)
 	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
 		return nil, scanner.Err()
 	}
+
 	line := scanner.Text() // firt line
 	fields := strings.Fields(line)
 	if len(fields) < 8 || fields[0] != "cpu" {
-		return nil, nil // should not happen
+		return nil, fmt.Errorf("unexpected /proc/stat format: %q", line)
 	}
 
-	stats := &CPUStats{}
-	// fields[1] is user, fields[2] nice, fields[3] system, fields[4] idle, etc.
 	values := make([]uint64, 8)
 	for i := 0; i < 8; i++ {
 		val, err := strconv.ParseUint(fields[i+1], 10, 64)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parsing field %d: %w", i+1, err)
 		}
 		values[i] = val
 	}
 
-	stats.User = values[0]
-	stats.Nice = values[1]
-	stats.System = values[2]
-	stats.Idle = values[3]
-	stats.IOWait = values[4]
-	stats.IRQ = values[5]
-	stats.SoftIRQ = values[6]
-	stats.Steal = values[7]
+	stats := &CPUStats{
+		User:    values[0],
+		Nice:    values[1],
+		System:  values[2],
+		Idle:    values[3],
+		IOWait:  values[4],
+		IRQ:     values[5],
+		SoftIRQ: values[6],
+		Steal:   values[7],
+	}
 
 	// Total is sum of all
 	var total uint64
