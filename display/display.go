@@ -2,7 +2,7 @@ package display
 
 import (
 	"fmt"
-	monitor "goSysMon/Monitor"
+	"goSysMon/monitor"
 	"goSysMon/proc"
 	"strings"
 )

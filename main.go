@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	// Parse command-line flags
+	// Parse command‑line flags
 	interval := flag.Int("interval", 2, "Refresh interval in seconds")
 	numProcs := flag.Int("procs", 10, "Number of processes to display")
 	flag.Parse()
@@ -32,15 +32,14 @@ func main() {
 	// Initial collection and display
 	snap, err := mon.Collect()
 	if err != nil {
-		log.Fatal("Initial collection failed: %v", err)
+		log.Fatalf("Initial collection failed: %v", err)
 	}
 	display.ShowSnapshot(snap, *numProcs)
-
 
 	// Main loop: wait for tick or signal
 	for {
 		select {
-		case <- ticker.C:
+		case <-ticker.C:
 			snap, err := mon.Collect()
 			if err != nil {
 				log.Printf("Error collecting: %v", err)
