@@ -76,6 +76,9 @@ type CPUUsage struct {
 
 // CalculateCPUUsage takes two CPUStats snapshots and returns the usage percentage.
 func CalculateCPUUsage(prev, curr *CPUStats) CPUUsage {
+	if prev == nil || curr == nil {
+		return CPUUsage{Percent: 0.0}
+	}
 	totalDelta := curr.Total - prev.Total
 	idleDelta := curr.Idle - prev.Idle
 	usage := 0.0

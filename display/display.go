@@ -5,6 +5,7 @@ import (
 	"goSysMon/monitor"
 	"goSysMon/proc"
 	"strings"
+	"sort"
 )
 
 // ClearScreen moves cursor to top-left and clear the terminal
@@ -24,7 +25,7 @@ func ShowSnapshot(snap *monitor.SystemSnapshot, numProcs int) {
 
 	// Print header for process table
 	fmt.Printf("\n%-7s %-20s %-8s %-10s\n", "PID", "COMMAND", "CPU%", "MEM (kB)")
-	fmt.Printf(strings.Repeat("-", 60))
+	fmt.Println(strings.Repeat("-", 60))
 
 	//Display top N processes (by memory usage, simple sort)
 	procs := snap.Processes
@@ -41,9 +42,13 @@ func ShowSnapshot(snap *monitor.SystemSnapshot, numProcs int) {
 		memKB := p.RSS * pageSize / 1024
 
 		// CPU% would need previous per-process data, we'll show 0 now
-		fmt.Printf("%-7d %-20 %-8.1f %-10d\n",
-			p.PID, truncateString(p.Command, 20), 0.0, memKB)
+		fmt.Printf("%-7d %-20s %-8.1f %-10d\n",
+			p.PID, truncateString(p.Command, 20), "-", memKB)
 	}
+
+	sort.Slice(procs, func(i, j int) bool {
+		return procs[i].RSS > procs[j].RSS
+	})
 }
 
 func truncateString(s string, maxLen int) string {

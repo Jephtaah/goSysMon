@@ -2,6 +2,7 @@ package proc
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -52,17 +53,18 @@ func ReadProcess(pid int) (*Process, error) {
 	// The stat file format is tricky: the 'comm' field is in parentheses and can conta in space
 	// We find the closing parenthesis.
 	line := string(statData)
+	openParen := strings.Index(line, "(")
 	closeParen := strings.LastIndex(line, ")")
-	if closeParen == -1 {
-		return nil, nil
+	if openParen == -1 || closeParen == -1 || openParen >= closeParen {
+		return nil, fmt.Errorf("invalid stat format (missing parentheses): %s", line)
 	}
 	comm := line[strings.Index(line, "(")+1 : closeParen]
 
 	// The part after ')' starts with a space, then fields seperated by space.
 	rest := line[closeParen+2:] // skip ")"
 	fields := strings.Fields(rest)
-	if len(fields) < 22 {
-		return nil, nil
+	if len(fields) < 24 {
+		return nil, fmt.Errorf("unexpected number of stat fields: %d", len(fields))
 	}
 
 	utime, err := strconv.ParseUint(fields[13], 10, 64)
